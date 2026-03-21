@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# Env
+.env
+
+# React Native
+.expo/
+.expo-shared/
+android/app/build/
+ios/build/
+
+# OS
+.DS_Store
+Thumbs.db

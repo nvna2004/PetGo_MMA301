@@ -8,6 +8,7 @@ export default function UserLayout() {
       <Stack.Screen name="shop-registration" />
       <Stack.Screen name="services" />
       <Stack.Screen name="add-service" />
+      <Stack.Screen name="shop-bookings" />
     </Stack>
   );
 }

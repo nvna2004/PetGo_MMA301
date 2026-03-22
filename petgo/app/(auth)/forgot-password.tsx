@@ -65,9 +65,10 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <View style={styles.form}>
+          <ThemedText style={styles.inputLabel}>Email</ThemedText>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Nhập email của bạn"
             placeholderTextColor="#999"
             value={email}
             onChangeText={(text) => { setEmail(text); setError(''); }}
@@ -138,6 +139,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    opacity: 0.8,
   },
   errorText: {
     color: '#FF4D4D',

@@ -39,14 +39,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Tìm kiếm',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
-          href: role === 'customer' ? undefined : null, // Show only for customers
-        }}
-      />
+
       <Tabs.Screen
         name="booking"
         options={{
@@ -66,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: 'Cài đặt',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
-          href: role === 'shop_owner' ? undefined : null, 
+          href: role === 'shop_owner' ? undefined : null,
         }}
       />
       <Tabs.Screen
@@ -81,7 +74,7 @@ export default function TabLayout() {
         options={{
           title: 'Thú cưng',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="pets" color={color} />,
-          href: role === 'customer' ? undefined : null, // Show only for customers
+          href: role === 'customer' ? undefined : null,
         }}
       />
     </Tabs>

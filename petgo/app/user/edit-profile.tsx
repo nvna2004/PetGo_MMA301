@@ -18,12 +18,14 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import api from '@/utils/api';
 import { showSuccess, showError, showToast } from '@/utils/alertHelper';
+import { CityPicker } from '@/components/city-picker';
 
 export default function EditProfileScreen() {
   const [name, setName] = useState('');
   const [street, setStreet] = useState('');
   const [ward, setWard] = useState('');
   const [city, setCity] = useState('');
+  const [cityPickerVisible, setCityPickerVisible] = useState(false);
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -55,8 +57,12 @@ export default function EditProfileScreen() {
         setCity(user.address?.city || '');
         setUserRole(user.role || '');
         if (user.coordinates) {
-          setLatitude(user.coordinates.latitude?.toString() || '');
-          setLongitude(user.coordinates.longitude?.toString() || '');
+          if (!params?.selectedLat) {
+            setLatitude(user.coordinates.latitude?.toString() || '');
+          }
+          if (!params?.selectedLng) {
+            setLongitude(user.coordinates.longitude?.toString() || '');
+          }
         }
       }
     } catch (error) {
@@ -112,7 +118,7 @@ export default function EditProfileScreen() {
 
       if (response.data.success) {
         showSuccess('Thành công', 'Cập nhật hồ sơ thành công');
-        router.back();
+        router.navigate('/(tabs)/profile');
       }
     } catch (error: any) {
       console.error('Update profile error:', error);
@@ -182,14 +188,22 @@ export default function EditProfileScreen() {
 
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Tỉnh / Thành phố</ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder="Ví dụ: TP. Hồ Chí Minh"
-                placeholderTextColor="#999"
-                value={city}
-                onChangeText={setCity}
-              />
+              <TouchableOpacity 
+                style={styles.input} 
+                onPress={() => setCityPickerVisible(true)}
+              >
+                <ThemedText style={[styles.inputText, !city && styles.placeholderText]}>
+                  {city || 'Ví dụ: TP. Hồ Chí Minh'}
+                </ThemedText>
+              </TouchableOpacity>
             </View>
+
+            <CityPicker
+              visible={cityPickerVisible}
+              onClose={() => setCityPickerVisible(false)}
+              onSelect={setCity}
+              currentValue={city}
+            />
 
             {userRole === 'shop_owner' && (
               <>
@@ -228,7 +242,8 @@ export default function EditProfileScreen() {
                           pathname: '/user/map-picker',
                           params: { 
                             initialLat: latitude, 
-                            initialLng: longitude 
+                            initialLng: longitude,
+                            returnTo: '/user/edit-profile'
                           }
                         } as any);
                       }}
@@ -324,6 +339,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  inputText: {
+    fontSize: 16,
+    lineHeight: 56,
+  },
+  placeholderText: {
+    color: '#999',
   },
   saveButton: {
     backgroundColor: '#FF6F61',

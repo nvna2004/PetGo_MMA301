@@ -30,13 +30,15 @@ const adminRoutes = require('./routes/adminRoutes');
 const shopRoutes = require('./routes/shopRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
-app.use('/api/users', userRoutes); 
+app.use('/api/users', userRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/', (req, res) => {
   res.send('PetGo API is running...');
@@ -44,6 +46,33 @@ app.get('/', (req, res) => {
 
 
 const PORT = process.env.PORT || 9999;
-app.listen(PORT, () => {
+
+const http = require('http');
+const { Server } = require('socket.io');
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('User connected to Socket:', socket.id);
+
+  socket.on('joinRoom', (roomId) => {
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected from Socket:', socket.id);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

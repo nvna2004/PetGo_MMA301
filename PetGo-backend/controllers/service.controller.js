@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const PetService = require('../models/PetService');
 const ServiceCategory = require('../models/ServiceCategory');
+const User = require('../models/User');
 
 
 const getCategories = async (req, res) => {
@@ -130,21 +132,109 @@ const deleteService = async (req, res) => {
 
 const getAllServices = async (req, res) => {
   try {
-    const { q, category } = req.query;
+    const { q, category, lat, lng, page = 1, limit = 10 } = req.query;
 
     const filter = {};
-    if (category) filter.category = category;
+    if (category) filter.category = new mongoose.Types.ObjectId(category);
     if (q && q.trim()) {
       filter.name = { $regex: q.trim(), $options: 'i' };
     }
 
-    const services = await PetService.find(filter)
-      .populate('category', 'name')
-      .populate('shopOwner', 'name address coordinates')
-      .sort({ createdAt: -1 })
-      .lean();
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    res.status(200).json({ success: true, data: services });
+    let services;
+    let total;
+
+    if (lat && lng) {
+      const pipeline = [
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [parseFloat(lng), parseFloat(lat)]
+            },
+            distanceField: "distance",
+            query: { role: 'shop_owner' },
+            spherical: true,
+            distanceMultiplier: 0.001
+          }
+        },
+        {
+          $lookup: {
+            from: 'petservices',
+            localField: '_id',
+            foreignField: 'shopOwner',
+            as: 'shopServices'
+          }
+        },
+        { $unwind: '$shopServices' },
+        {
+          $match: {
+            ...(category ? { 'shopServices.category': new mongoose.Types.ObjectId(category) } : {}),
+            ...(q ? { 'shopServices.name': { $regex: q.trim(), $options: 'i' } } : {})
+          }
+        },
+        {
+          $project: {
+            _id: '$shopServices._id',
+            name: '$shopServices.name',
+            description: '$shopServices.description',
+            category: '$shopServices.category',
+            shopOwner: {
+              _id: '$_id',
+              name: '$name',
+              address: '$address',
+              coordinates: '$coordinates'
+            },
+            price: '$shopServices.price',
+            duration: '$shopServices.duration',
+            image: '$shopServices.image',
+            _distance: '$distance'
+          }
+        }
+      ];
+
+      // Đếm tổng cho phân trang
+      const countRes = await User.aggregate([...pipeline, { $count: 'total' }]);
+      total = countRes.length > 0 ? countRes[0].total : 0;
+
+      services = await User.aggregate([
+        ...pipeline,
+        { $skip: skip },
+        { $limit: limitNumber }
+      ]);
+      
+      const CategoryModel = require('../models/ServiceCategory');
+      for (let s of services) {
+        if (s.category) {
+          s.category = await CategoryModel.findById(s.category).select('name').lean();
+        }
+      }
+
+    } else {
+      total = await PetService.countDocuments(filter);
+      services = await PetService.find(filter)
+        .populate('category', 'name')
+        .populate('shopOwner', 'name address coordinates')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
+        .lean();
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      count: services.length,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber)
+      },
+      data: services 
+    });
   } catch (error) {
     console.error('getAllServices Error:', error);
     res.status(500).json({ success: false, message: 'Lỗi máy chủ' });

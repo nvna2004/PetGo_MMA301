@@ -16,6 +16,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import api from '@/utils/api';
 
+import ShopBookingsScreen from '../user/shop-bookings';
+
 const STATUS_MAP: any = {
   pending: { label: 'Đang chờ', color: '#FFB800', bg: '#FFF9E6' },
   confirmed: { label: 'Đã xác nhận', color: '#007AFF', bg: '#E5F1FF' },
@@ -24,6 +26,43 @@ const STATUS_MAP: any = {
 };
 
 export default function BookingScreen() {
+  const [user, setUser] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserRole = async () => {
+        try {
+          const res = await api.get('/users/me');
+          if (res.data.success) {
+            setUser(res.data.user);
+          }
+        } catch (error) {
+          console.error('Error fetching user for booking tab:', error);
+        } finally {
+          setIsReady(true);
+        }
+      };
+      fetchUserRole();
+    }, [])
+  );
+
+  if (!isReady) {
+    return (
+      <SafeAreaView style={[styles.centered, { flex: 1 }]}>
+        <ActivityIndicator size="large" color="#FF6F61" />
+      </SafeAreaView>
+    );
+  }
+
+  if (user && user.role === 'shop_owner') {
+    return <ShopBookingsScreen />;
+  }
+
+  return <CustomerBookingScreen />;
+}
+
+function CustomerBookingScreen() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,7 +122,6 @@ export default function BookingScreen() {
     const status = STATUS_MAP[item.status] || STATUS_MAP.pending;
     const date = new Date(item.bookingDate);
     const dateString = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-
 
     const now = new Date();
     const diffTime = date.getTime() - now.getTime();

@@ -80,9 +80,10 @@ export default function ResetPasswordScreen() {
           </View>
 
           <View style={styles.form}>
+            <ThemedText style={styles.inputLabel}>Mã OTP</ThemedText>
             <TextInput
               style={[styles.input, { letterSpacing: 8, fontSize: 24, textAlign: 'center' }]}
-              placeholder="Mã OTP"
+              placeholder="------"
               placeholderTextColor="#999"
               value={otp}
               onChangeText={(text) => { setOtp(text); setError(''); }}
@@ -90,18 +91,20 @@ export default function ResetPasswordScreen() {
               maxLength={6}
             />
             
+            <ThemedText style={styles.inputLabel}>Mật khẩu mới</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Mật khẩu mới"
+              placeholder="Nhập mật khẩu mới"
               placeholderTextColor="#999"
               value={newPassword}
               onChangeText={(text) => { setNewPassword(text); setError(''); }}
               secureTextEntry
             />
 
+            <ThemedText style={styles.inputLabel}>Xác nhận mật khẩu mới</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Xác nhận mật khẩu mới"
+              placeholder="Xác nhận mật khẩu"
               placeholderTextColor="#999"
               value={confirmPassword}
               onChangeText={(text) => { setConfirmPassword(text); setError(''); }}
@@ -171,6 +174,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    opacity: 0.8,
   },
   errorText: {
     color: '#FF4D4D',

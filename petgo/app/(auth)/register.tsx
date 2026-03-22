@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import api from '@/utils/api';
 import { showSuccess, showError } from '@/utils/alertHelper';
+import { CityPicker } from '@/components/city-picker';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -25,6 +26,7 @@ export default function RegisterScreen() {
   const [street, setStreet] = useState('');
   const [ward, setWard] = useState('');
   const [city, setCity] = useState('');
+  const [cityPickerVisible, setCityPickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -90,41 +92,50 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.form}>
+            <ThemedText style={styles.inputLabel}>Họ và tên *</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Họ và tên *"
+              placeholder="Nhập họ và tên"
               placeholderTextColor="#999"
               value={name}
               onChangeText={(text) => { setName(text); setError(''); }}
             />
+            
+            <ThemedText style={styles.inputLabel}>Email *</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Email *"
+              placeholder="example@gmail.com"
               placeholderTextColor="#999"
               value={email}
               onChangeText={(text) => { setEmail(text); setError(''); }}
               autoCapitalize="none"
               keyboardType="email-address"
             />
+            
+            <ThemedText style={styles.inputLabel}>Số điện thoại *</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Số điện thoại *"
+              placeholder="09xxx..."
               placeholderTextColor="#999"
               value={phone}
               onChangeText={(text) => { setPhone(text); setError(''); }}
               keyboardType="phone-pad"
             />
+            
+            <ThemedText style={styles.inputLabel}>Mật khẩu *</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Mật khẩu *"
+              placeholder="Ít nhất 8 ký tự, có chữ hoa/thường"
               placeholderTextColor="#999"
               value={password}
               onChangeText={(text) => { setPassword(text); setError(''); }}
               secureTextEntry
             />
+            
+            <ThemedText style={styles.inputLabel}>Nhập lại mật khẩu *</ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="Nhập lại mật khẩu *"
+              placeholder="Xác nhận lại mật khẩu"
               placeholderTextColor="#999"
               value={confirmPassword}
               onChangeText={(text) => { setConfirmPassword(text); setError(''); }}
@@ -152,12 +163,23 @@ export default function RegisterScreen() {
             />
             
             <ThemedText style={styles.inputLabel}>Tỉnh / Thành phố</ThemedText>
-            <TextInput
-              style={styles.input}
-              placeholder="Ví dụ: TP. Hồ Chí Minh"
-              placeholderTextColor="#999"
-              value={city}
-              onChangeText={setCity}
+            <TouchableOpacity 
+              style={styles.input} 
+              onPress={() => setCityPickerVisible(true)}
+            >
+              <ThemedText style={[styles.inputText, !city && styles.placeholderText]}>
+                {city || 'Ví dụ: TP. Hồ Chí Minh'}
+              </ThemedText>
+            </TouchableOpacity>
+
+            <CityPicker
+              visible={cityPickerVisible}
+              onClose={() => setCityPickerVisible(false)}
+              onSelect={(cityName) => {
+                setCity(cityName);
+                setError('');
+              }}
+              currentValue={city}
             />
 
             {error ? (
@@ -226,6 +248,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
+  },
+  inputText: {
+    fontSize: 16,
+    lineHeight: 56,
+  },
+  placeholderText: {
+    color: '#999',
   },
   sectionLabel: {
     fontSize: 14,

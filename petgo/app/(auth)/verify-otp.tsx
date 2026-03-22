@@ -64,9 +64,10 @@ export default function VerifyOTPScreen() {
         </View>
 
         <View style={styles.form}>
+          <ThemedText style={styles.inputLabel}>Mã OTP</ThemedText>
           <TextInput
             style={[styles.input, { letterSpacing: 8 }]}
-            placeholder="Nhập mã OTP"
+            placeholder=" Nhập mã 6 số"
             placeholderTextColor="#999"
             value={otp}
             onChangeText={(text) => { setOtp(text); setError(''); }}
@@ -141,6 +142,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    opacity: 0.8,
   },
   errorText: {
     color: '#FF4D4D',

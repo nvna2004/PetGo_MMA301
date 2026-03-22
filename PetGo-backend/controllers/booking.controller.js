@@ -43,7 +43,7 @@ const createBooking = async (req, res) => {
       bookingDate,
       timeSlot,
       price: petService.price,
-      paymentMethod: paymentMethod || 'cash',
+      paymentMethod: 'cash',
       status: 'pending',
       paymentStatus: 'pending',
       notes
@@ -57,8 +57,41 @@ const createBooking = async (req, res) => {
 };
 
 
+const autoCancelOverdueBookings = async () => {
+  try {
+    const pendingBookings = await Booking.find({ status: 'pending' });
+    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const bookingsToCancel = pendingBookings.filter(b => {
+      const bDate = new Date(b.bookingDate);
+      const compareDate = new Date(bDate);
+      compareDate.setHours(0, 0, 0, 0);
+
+      if (compareDate < today) return true;
+      if (compareDate.getTime() === today.getTime()) {
+        const startHour = parseInt(b.timeSlot.split(':')[0]);
+        if (now.getHours() >= startHour) return true;
+      }
+      return false;
+    }).map(b => b._id);
+
+    if (bookingsToCancel.length > 0) {
+      await Booking.updateMany(
+        { _id: { $in: bookingsToCancel } },
+        { $set: { status: 'cancelled' } }
+      );
+    }
+  } catch (error) {
+    console.error("Auto cancel error:", error);
+  }
+};
+
 const getMyBookings = async (req, res) => {
   try {
+    await autoCancelOverdueBookings();
+    
     const bookings = await Booking.find({ user: req.user._id })
       .populate('service', 'name price duration image')
       .populate('pet', 'name type breed image')
@@ -75,6 +108,8 @@ const getMyBookings = async (req, res) => {
 
 const getShopBookings = async (req, res) => {
   try {
+    await autoCancelOverdueBookings();
+
     const bookings = await Booking.find({ shopOwner: req.user._id })
       .populate('service', 'name price duration')
       .populate('pet', 'name type breed medicalNotes')

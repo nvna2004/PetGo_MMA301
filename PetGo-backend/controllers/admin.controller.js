@@ -119,6 +119,11 @@ const processShopRequest = async (req, res) => {
       if (user) {
         user.role = 'shop_owner';
         user.coordinates = request.coordinates;
+        // Cập nhật trường GeoJSON location
+        user.location = {
+          type: 'Point',
+          coordinates: [request.coordinates.longitude, request.coordinates.latitude]
+        };
         await user.save();
       }
     }

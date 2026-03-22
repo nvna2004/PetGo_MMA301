@@ -32,12 +32,10 @@ const registerUser = async (req, res) => {
     }).select('+active +otpExpires');
 
     if (existingUser) {
-
       if (!existingUser.active && existingUser.otpExpires < Date.now()) {
         await User.deleteOne({ _id: existingUser._id });
         console.log(`Deleted expired inactive user: ${existingUser.email}`);
       } else {
-
         if (existingUser.phone === phone) {
           return res.status(400).json({ success: false, message: 'Số điện thoại này đã được sử dụng' });
         }
@@ -102,7 +100,6 @@ const registerUser = async (req, res) => {
 
   } catch (error) {
     console.error('Register Error:', error);
-    // Handle MongoDB duplicate key error (code 11000)
     if (error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
       return res.status(400).json({ 
@@ -194,7 +191,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
@@ -435,9 +431,15 @@ const updateProfile = async (req, res) => {
 
     if (user.role === 'shop_owner') {
       if (latitude !== undefined && longitude !== undefined && latitude !== '' && longitude !== '') {
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
         user.coordinates = {
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude)
+          latitude: lat,
+          longitude: lng
+        };
+        user.location = {
+          type: 'Point',
+          coordinates: [lng, lat]
         };
       }
     }
@@ -565,9 +567,15 @@ const updateShopInfo = async (req, res) => {
     }
 
     if (latitude !== undefined && longitude !== undefined && latitude !== '' && longitude !== '') {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
       user.coordinates = {
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
+        latitude: lat,
+        longitude: lng
+      };
+      user.location = {
+        type: 'Point',
+        coordinates: [lng, lat]
       };
     }
 

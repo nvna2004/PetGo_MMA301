@@ -12,10 +12,10 @@ import { showError } from '@/utils/alertHelper';
 const { width, height } = Dimensions.get('window');
 
 export default function MapPickerScreen() {
-  const { initialLat, initialLng } = useLocalSearchParams();
+  const { initialLat, initialLng, returnTo } = useLocalSearchParams();
   
   const [region, setRegion] = useState({
-    latitude: 10.762622, // Default to HCM city approx
+    latitude: 10.762622,
     longitude: 106.660172,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
@@ -30,7 +30,6 @@ export default function MapPickerScreen() {
   const setupInitialLocation = async () => {
     try {
       if (initialLat && initialLng) {
-        // Use provided coordinates
         const lat = parseFloat(initialLat as string);
         const lng = parseFloat(initialLng as string);
         setRegion({
@@ -43,7 +42,6 @@ export default function MapPickerScreen() {
         setMarkerCoordinate({ latitude: lat, longitude: lng });
         setLoading(false);
       } else {
-        // Try to get current location
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
           const loc = await Location.getCurrentPositionAsync({});
@@ -77,11 +75,14 @@ export default function MapPickerScreen() {
       return;
     }
 
-    // Pass coordinates back to the previous screen using router configuration
-    router.back();
-    router.setParams({
-      selectedLat: markerCoordinate.latitude.toString(),
-      selectedLng: markerCoordinate.longitude.toString()
+    const returnPath = (returnTo as string) || '/user/edit-profile';
+
+    router.navigate({
+      pathname: returnPath as any,
+      params: {
+        selectedLat: markerCoordinate.latitude.toString(),
+        selectedLng: markerCoordinate.longitude.toString()
+      }
     });
   };
 
@@ -96,7 +97,6 @@ export default function MapPickerScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#333" />

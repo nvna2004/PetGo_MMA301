@@ -144,6 +144,14 @@ export default function ShopDetailScreen() {
               <ThemedText style={styles.contactText}>{shop.email}</ThemedText>
             </View>
           ) : null}
+
+          <TouchableOpacity 
+            style={[styles.bookBtn, { backgroundColor: '#4A90E2', marginTop: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }]}
+            onPress={() => router.push(`/chat/${id}` as any)}
+          >
+            <Ionicons name="chatbubble-ellipses" size={18} color="#fff" />
+            <ThemedText style={styles.bookBtnText}>Nhắn tin cho Shop</ThemedText>
+          </TouchableOpacity>
         </ThemedView>
 
 

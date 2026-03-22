@@ -34,7 +34,6 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    console.log('Bắt đầu gửi yêu cầu đăng nhập tới:', api.defaults.baseURL + '/users/login');
 
     try {
       const response = await api.post('/users/login', {
@@ -79,18 +78,21 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
+          <ThemedText style={styles.inputLabel}>Email</ThemedText>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Nhập email của bạn"
             placeholderTextColor="#999"
             value={email}
             onChangeText={(text) => { setEmail(text); setError(''); }}
             autoCapitalize="none"
             keyboardType="email-address"
           />
+          
+          <ThemedText style={styles.inputLabel}>Mật khẩu</ThemedText>
           <TextInput
             style={styles.input}
-            placeholder="Mật khẩu"
+            placeholder="Nhập mật khẩu"
             placeholderTextColor="#999"
             value={password}
             onChangeText={(text) => { setPassword(text); setError(''); }}
@@ -184,6 +186,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    opacity: 0.8,
   },
   errorText: {
     color: '#FF4D4D',

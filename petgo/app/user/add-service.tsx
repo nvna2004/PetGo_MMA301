@@ -87,8 +87,6 @@ export default function AddServiceScreen() {
     });
 
     if (!result.canceled) {
-      // In a real app, you would upload to a server
-      // For now, we'll just use the local URI
       setFormData({ ...formData, image: result.assets[0].uri });
     }
   };

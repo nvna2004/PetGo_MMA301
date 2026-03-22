@@ -17,8 +17,7 @@ import api from '@/utils/api';
 
 const TIME_SLOTS = ['08:00 - 09:00', '09:00 - 10:00', '10:00 - 11:00', '14:00 - 15:00', '15:00 - 16:00', '16:00 - 17:00'];
 const PAYMENT_METHODS = [
-  { id: 'cash', label: 'Tiền mặt tại shop' },
-  { id: 'transfer', label: 'Chuyển khoản' },
+  { id: 'cash', label: 'Tiền mặt tại cửa hàng' },
 ];
 
 export default function BookServiceScreen() {
@@ -64,6 +63,13 @@ export default function BookServiceScreen() {
     }
     if (!selectedTimeSlot) {
       return Alert.alert('Lỗi', 'Vui lòng chọn khung giờ');
+    }
+
+    if (selectedDate.toDateString() === new Date().toDateString()) {
+      const slotHour = parseInt(selectedTimeSlot.split(':')[0]);
+      if (slotHour <= new Date().getHours()) {
+        return Alert.alert('Lỗi', 'Không thể chọn khung giờ đã trôi qua trong ngày hôm nay.');
+      }
     }
 
     try {
@@ -173,7 +179,10 @@ export default function BookServiceScreen() {
                   styles.dateCard,
                   isSelected && styles.dateCardActive
                 ]}
-                onPress={() => setSelectedDate(date)}
+                onPress={() => {
+                  setSelectedDate(date);
+                  setSelectedTimeSlot('');
+                }}
               >
                 <ThemedText style={[styles.dateDayName, isSelected && { color: '#fff' }]}>{dayName}</ThemedText>
                 <ThemedText style={[styles.dateDayNum, isSelected && { color: '#fff' }]}>{date.getDate()}/{date.getMonth() + 1}</ThemedText>
@@ -217,23 +226,10 @@ export default function BookServiceScreen() {
 
         <ThemedText style={styles.sectionTitle}>4. Phương thức thanh toán</ThemedText>
         <View style={styles.paymentContainer}>
-          {PAYMENT_METHODS.map((pm) => (
-            <TouchableOpacity
-              key={pm.id}
-              style={[
-                styles.paymentRow,
-                paymentMethod === pm.id && styles.paymentRowActive
-              ]}
-              onPress={() => setPaymentMethod(pm.id)}
-            >
-              <Ionicons 
-                name={paymentMethod === pm.id ? 'radio-button-on' : 'radio-button-off'} 
-                size={22} 
-                color={paymentMethod === pm.id ? '#FF6F61' : '#ccc'} 
-              />
-              <ThemedText style={styles.paymentText}>{pm.label}</ThemedText>
-            </TouchableOpacity>
-          ))}
+          <View style={[styles.paymentRow, styles.paymentRowActive]}>
+            <Ionicons name="cash-outline" size={24} color="#FF6F61" />
+            <ThemedText style={styles.paymentText}>Thanh toán tiền mặt tại cửa hàng</ThemedText>
+          </View>
         </View>
 
 

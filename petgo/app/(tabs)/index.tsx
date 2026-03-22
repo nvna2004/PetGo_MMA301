@@ -83,12 +83,18 @@ function ShopOwnerDashboard({ user }: { user: any }) {
     }, [])
   );
 
-  const handleApprove = async (id: string, action: 'confirmed' | 'rejected') => {
+  const handleApprove = async (id: string, action: 'confirmed' | 'cancelled') => {
     try {
-
-      Alert.alert('Chức năng', `Bạn vừa chọn: ${action === 'confirmed' ? 'Duyệt' : 'Từ chối'} cho booking ${id}`);
-    } catch (error) {
+      const res = await api.put(`/bookings/shop/${id}/status`, { status: action });
+      if (res.data.success) {
+        Alert.alert('Thành công', action === 'confirmed' ? 'Đã duyệt lịch hẹn thành công' : 'Đã từ chối lịch hẹn');
+        fetchData();
+      } else {
+        Alert.alert('Lỗi', res.data.message || 'Không thể cập nhật trạng thái');
+      }
+    } catch (error: any) {
       console.error('Error updating booking status:', error);
+      Alert.alert('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật');
     }
   };
 
@@ -185,7 +191,7 @@ function ShopOwnerDashboard({ user }: { user: any }) {
                   <ThemedText style={shopStyles.bookingItemTime}>{booking.timeSlot} - {new Date(booking.bookingDate).toLocaleDateString('vi-VN')} | {booking.pet?.weight} kg</ThemedText>
                 </View>
                 <View style={shopStyles.bookingActions}>
-                  <TouchableOpacity style={shopStyles.rejectBtn} onPress={() => handleApprove(booking._id, 'rejected')}>
+                  <TouchableOpacity style={shopStyles.rejectBtn} onPress={() => handleApprove(booking._id, 'cancelled')}>
                     <ThemedText style={shopStyles.rejectBtnText}>Từ chối</ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity style={shopStyles.approveBtn} onPress={() => handleApprove(booking._id, 'confirmed')}>
@@ -199,12 +205,20 @@ function ShopOwnerDashboard({ user }: { user: any }) {
 
 
         <View style={shopStyles.footerActions}>
-          <TouchableOpacity style={shopStyles.footerBtn}>
+          <TouchableOpacity 
+            style={shopStyles.footerBtn} 
+            onPress={() => router.push('/user/shop-bookings' as any)}
+            activeOpacity={0.8}
+          >
             <Ionicons name="list-outline" size={28} color="#4A90E2" />
             <ThemedText style={shopStyles.footerBtnTitle}>Danh sách{'\n'}booking</ThemedText>
             <View style={shopStyles.badgeBadge}><ThemedText style={shopStyles.badgeText}>{stats?.stats?.pendingOrders || 0}</ThemedText></View>
           </TouchableOpacity>
-          <TouchableOpacity style={[shopStyles.footerBtn, { backgroundColor: '#FDF7F7' }]}>
+          <TouchableOpacity 
+            style={[shopStyles.footerBtn, { backgroundColor: '#FDF7F7' }]}
+            onPress={() => router.push('/(tabs)/chat' as any)}
+            activeOpacity={0.8}
+          >
             <Ionicons name="chatbubble-ellipses-outline" size={28} color="#FF6F61" />
             <ThemedText style={[shopStyles.footerBtnTitle, { color: '#333' }]}>Chat với{'\n'}khách</ThemedText>
             <View style={[shopStyles.badgeBadge, { right: 8 }]}><ThemedText style={shopStyles.badgeText}>0</ThemedText></View>
@@ -297,26 +311,17 @@ function CustomerHome({ user }: { user: any }) {
       const params: any = {};
       if (categoryId) params.category = categoryId;
       if (q && q.trim()) params.q = q.trim();
+      
+      // Thêm tọa độ vào params để backend sắp xếp theo khoảng cách
+      const coords = coordsRef.current;
+      if (coords) {
+        params.lat = coords.latitude;
+        params.lng = coords.longitude;
+      }
+
       const res = await api.get('/services/all', { params });
       if (res.data.success) {
-        let data = res.data.data;
-        const coords = coordsRef.current;
-        if (coords) {
-          data = data.map((service: any) => {
-            const lat = service.shopOwner?.coordinates?.latitude;
-            const lng = service.shopOwner?.coordinates?.longitude;
-            const dist = (lat != null && lng != null)
-              ? calcDistance(coords.latitude, coords.longitude, lat, lng)
-              : null;
-            return { ...service, _distance: dist };
-          });
-          data.sort((a: any, b: any) => {
-            if (a._distance == null) return 1;
-            if (b._distance == null) return -1;
-            return a._distance - b._distance;
-          });
-        }
-        setServices(data);
+        setServices(res.data.data);
       }
     } catch (error) {
       console.error('Error fetching services:', error);

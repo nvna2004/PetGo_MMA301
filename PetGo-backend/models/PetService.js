@@ -45,4 +45,8 @@ const petServiceSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+petServiceSchema.index({ category: 1 });
+petServiceSchema.index({ shopOwner: 1 });
+petServiceSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model("PetService", petServiceSchema);

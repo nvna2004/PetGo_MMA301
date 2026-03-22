@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
@@ -33,6 +33,18 @@ export default function ShopRegistrationScreen() {
     longitude: '',
   });
 
+  const params = useLocalSearchParams();
+
+  useEffect(() => {
+    if (params?.selectedLat && params?.selectedLng) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: params.selectedLat as string,
+        longitude: params.selectedLng as string
+      }));
+    }
+  }, [params?.selectedLat, params?.selectedLng]);
+
   useEffect(() => {
     checkExistingRequest();
     fetchUserProfile();
@@ -52,7 +64,9 @@ export default function ShopRegistrationScreen() {
           shopName: user.name || '',
           phone: user.phone || '',
           email: user.email || '',
-          address: addressStr
+          address: addressStr,
+          latitude: params?.selectedLat ? (params.selectedLat as string) : (prev.latitude || ''),
+          longitude: params?.selectedLng ? (params.selectedLng as string) : (prev.longitude || ''),
         }));
       }
     } catch (error) {
@@ -119,7 +133,7 @@ export default function ShopRegistrationScreen() {
       const response = await api.post('users/shop-request', payload);
       if (response.data.success) {
         showSuccess('Thành công', 'Yêu cầu của bạn đã được gửi. Vui lòng chờ duyệt.');
-        checkExistingRequest();
+        router.replace('/(tabs)/profile' as any);
       }
     } catch (error: any) {
       console.error('Submit shop request error:', error);
@@ -303,6 +317,23 @@ export default function ShopRegistrationScreen() {
                       <ThemedText style={styles.locationButtonText}>Lấy vị trí hiện tại</ThemedText>
                     </>
                   )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.locationButton, { marginTop: 12, backgroundColor: '#4A90E2' }]}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/user/map-picker',
+                      params: { 
+                        initialLat: formData.latitude, 
+                        initialLng: formData.longitude,
+                        returnTo: '/user/shop-registration'
+                      }
+                    } as any);
+                  }}
+                >
+                  <Ionicons name="map" size={18} color="#fff" />
+                  <ThemedText style={styles.locationButtonText}>Chọn trên bản đồ</ThemedText>
                 </TouchableOpacity>
               </View>
             </View>

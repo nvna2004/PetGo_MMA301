@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const PetService = require('../models/PetService');
@@ -119,21 +120,19 @@ const getPendingBookings = async (req, res) => {
 
 const getAllShops = async (req, res) => {
   try {
-    const { search, category } = req.query;
+    const { search, category, lat, lng } = req.query;
 
     let shopIds = null;
-
 
     if (category) {
       const servicesInCategory = await PetService.find({ category }).select('shopOwner').lean();
       shopIds = [...new Set(servicesInCategory.map(s => s.shopOwner.toString()))];
     }
 
-
     const query = { role: 'shop_owner' };
 
     if (shopIds !== null) {
-      query._id = { $in: shopIds };
+      query._id = { $in: shopIds.map(id => new mongoose.Types.ObjectId(id)) };
     }
 
     if (search && search.trim()) {
@@ -144,7 +143,34 @@ const getAllShops = async (req, res) => {
       ];
     }
 
-    const shops = await User.find(query, { name: 1, address: 1, coordinates: 1, createdAt: 1 }).lean();
+    let shops;
+    if (lat && lng) {
+      shops = await User.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [parseFloat(lng), parseFloat(lat)]
+            },
+            distanceField: "distance",
+            query: query,
+            spherical: true,
+            distanceMultiplier: 0.001
+          }
+        },
+        {
+          $project: {
+            name: 1,
+            address: 1,
+            coordinates: 1,
+            createdAt: 1,
+            distance: 1
+          }
+        }
+      ]);
+    } else {
+      shops = await User.find(query, { name: 1, address: 1, coordinates: 1, createdAt: 1 }).lean();
+    }
 
     res.status(200).json({
       success: true,

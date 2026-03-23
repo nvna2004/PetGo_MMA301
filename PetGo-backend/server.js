@@ -31,6 +31,7 @@ const shopRoutes = require('./routes/shopRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 app.use('/api/users', userRoutes);
 app.use('/api/pets', petRoutes);
@@ -39,6 +40,7 @@ app.use('/api/shop', shopRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.send('PetGo API is running...');
@@ -72,6 +74,11 @@ io.on('connection', (socket) => {
     console.log('User disconnected from Socket:', socket.id);
   });
 });
+
+const { startCronJobs } = require('./utils/cronJobs');
+
+// Bắt đầu chạy các background jobs (hủy đơn VNPay chờ)
+startCronJobs();
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

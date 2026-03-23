@@ -43,7 +43,7 @@ const createBooking = async (req, res) => {
       bookingDate,
       timeSlot,
       price: petService.price,
-      paymentMethod: 'cash',
+      paymentMethod: paymentMethod || 'cash',
       status: 'pending',
       paymentStatus: 'pending',
       notes

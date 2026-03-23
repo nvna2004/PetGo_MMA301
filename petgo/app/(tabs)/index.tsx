@@ -256,17 +256,27 @@ function CustomerHome({ user }: { user: any }) {
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const coordsRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
-  const initLocation = async () => {
+  const initLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (status !== 'granted') return null;
+      try {
+        const loc = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]) as Location.LocationObject;
         const coords = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
         coordsRef.current = coords;
         setUserCoords(coords);
+        return coords;
+      } catch {
+        console.log('Location unavailable or timed out, skipping...');
+        coordsRef.current = null;
+        return null;
       }
     } catch (e) {
-      console.error('Error getting location:', e);
+      console.error('Error requesting location permission:', e);
+      return null;
     }
   };
 
@@ -275,12 +285,17 @@ function CustomerHome({ user }: { user: any }) {
       let isActive = true;
 
       const loadContent = async () => {
-
-        if (!coordsRef.current) {
-          await initLocation();
-        }
+        // 1. Fetch services ngay lập tức (không chờ GPS)
         if (isActive) {
           fetchServices(selectedCategory, searchText);
+        }
+
+        // 2. Lấy GPS song song — khi có tọa độ thì reload để hiện khoảng cách
+        if (!coordsRef.current) {
+          const coords = await initLocation();
+          if (coords && isActive) {
+            fetchServices(selectedCategory, searchText);
+          }
         }
       };
 

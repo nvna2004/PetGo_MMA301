@@ -48,8 +48,13 @@ const bookingSchema = new mongoose.Schema({
 
   paymentMethod: {
     type: String,
-    enum: ['cash', 'transfer', 'card'],
+    enum: ['cash', 'vnpay'],
     default: 'cash'
+  },
+
+  vnpayTransactionId: {
+    type: String,
+    default: null
   },
 
   paymentStatus: {

@@ -25,6 +25,12 @@ const STATUS_MAP: any = {
   cancelled: { label: 'Đã hủy', color: '#FF3B30', bg: '#FFEBEA' },
 };
 
+const PAYMENT_STATUS_MAP: any = {
+  pending: { label: 'Chưa TT', color: '#FFB800' },
+  completed: { label: 'Đã TT', color: '#34C759' },
+  failed: { label: 'TT Thất bại', color: '#FF3B30' },
+};
+
 export default function BookingScreen() {
   const [user, setUser] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
@@ -120,6 +126,7 @@ function CustomerBookingScreen() {
 
   const renderBookingItem = ({ item }: { item: any }) => {
     const status = STATUS_MAP[item.status] || STATUS_MAP.pending;
+    const paymentStatus = PAYMENT_STATUS_MAP[item.paymentStatus] || PAYMENT_STATUS_MAP.pending;
     const date = new Date(item.bookingDate);
     const dateString = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 
@@ -169,23 +176,33 @@ function CustomerBookingScreen() {
         </TouchableOpacity>
 
         <View style={styles.cardFooter}>
-          <View>
+          <View style={styles.priceColumn}>
             <ThemedText style={styles.price}>
               {item.price?.toLocaleString('vi-VN')} đ
             </ThemedText>
             <ThemedText style={styles.paymentMethod}>
-              {item.paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}
+              {item.paymentMethod === 'cash' ? '💵 Tiền mặt' : '💳 VNPay'}
             </ThemedText>
           </View>
-          
-          {canCancel && (
-            <TouchableOpacity 
-              style={styles.cancelBtn} 
-              onPress={() => handleCancel(item._id)}
-            >
-              <ThemedText style={styles.cancelBtnText}>Hủy lịch</ThemedText>
-            </TouchableOpacity>
+
+          {item.paymentMethod === 'vnpay' && (
+            <View style={styles.paymentStatusCenter}>
+              <ThemedText style={[styles.paymentStatusLarge, { color: paymentStatus.color }]}>
+                {paymentStatus.label}
+              </ThemedText>
+            </View>
           )}
+          
+          <View style={styles.actionColumn}>
+            {canCancel && (
+              <TouchableOpacity 
+                style={styles.cancelBtn} 
+                onPress={() => handleCancel(item._id)}
+              >
+                <ThemedText style={styles.cancelBtnText}>Hủy lịch</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -331,11 +348,23 @@ const styles = StyleSheet.create({
   },
   cardFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#F2F2F7',
+  },
+  priceColumn: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  paymentStatusCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionColumn: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   price: {
     fontSize: 16,
@@ -345,6 +374,16 @@ const styles = StyleSheet.create({
   paymentMethod: {
     fontSize: 12,
     color: '#8E8E93',
+    marginTop: 2,
+  },
+  paymentStatus: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  paymentStatusLarge: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   emptyContainer: {
     alignItems: 'center',

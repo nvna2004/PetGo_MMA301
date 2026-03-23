@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  KeyboardTypeOptions,
+  Alert
 } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -101,13 +103,18 @@ export default function ShopRegistrationScreen() {
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      
-      setFormData(prev => ({
-        ...prev,
-        latitude: location.coords.latitude.toString(),
-        longitude: location.coords.longitude.toString()
-      }));
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        setFormData(prev => ({
+          ...prev,
+          latitude: location.coords.latitude.toString(),
+          longitude: location.coords.longitude.toString()
+        }));
+      } catch (locErr) {
+        Alert.alert('Không thể lấy vị trí', 'Vui lòng kiểm tra xem Dịch vụ vị trí (GPS) đã được bật chưa.');
+        setGettingLocation(false); // Ensure loading state is reset even if only location fails
+        return; // Exit if location cannot be fetched
+      }
       
       showSuccess('Thành công', 'Đã lấy vị trí hiện tại của bạn.');
     } catch (error) {

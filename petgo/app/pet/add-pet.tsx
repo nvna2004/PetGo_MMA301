@@ -73,20 +73,19 @@ export default function AddPetScreen() {
           formData.append('image', blob, `pet-${Date.now()}.jpg`);
         } else {
           const uriParts = image.split('.');
-          const fileType = uriParts[uriParts.length - 1];
+          const ext = uriParts[uriParts.length - 1].toLowerCase();
+          const type = ext === 'jpg' ? 'jpeg' : ext;
+          
           formData.append('image', {
-            uri: image,
-            name: `pet-${Date.now()}.${fileType}`,
-            type: `image/${fileType}`,
+            uri: Platform.OS === 'ios' ? image.replace('file://', '') : image,
+            name: `pet-${Date.now()}.${ext}`,
+            type: `image/${type}`,
           } as any);
         }
       }
 
-      const response = await api.post('pets', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Không set cứng Content-Type: multipart/form-data vì sẽ làm mất boundary string của Axios
+      const response = await api.post('pets', formData);
 
       if (response.data.success) {
         showSuccess('Thành công', 'Đã thêm thú cưng mới');

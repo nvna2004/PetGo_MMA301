@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -44,18 +44,21 @@ export default function MapPickerScreen() {
       } else {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
+        try {
           const loc = await Location.getCurrentPositionAsync({});
           setRegion({
-            ...region,
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
           });
           setMarkerCoordinate({
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
           });
+        } catch (locErr) {
+          Alert.alert('Không thể lấy vị trí', 'Vui lòng kiểm tra lại thiết lập GPS.');
+        }
         }
         setLoading(false);
       }

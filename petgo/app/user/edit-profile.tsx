@@ -84,12 +84,14 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      
-      setLatitude(location.coords.latitude.toString());
-      setLongitude(location.coords.longitude.toString());
-      
-      showToast('Đã lấy vị trí hiện tại');
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        setLatitude(location.coords.latitude.toString());
+        setLongitude(location.coords.longitude.toString());
+        showToast('Đã lấy vị trí hiện tại');
+      } catch (locErr) {
+        showError('Lỗi', 'Không thể lấy vị trí hiện tại. Vui lòng bật GPS.');
+      }
     } catch (error) {
       console.error('Error getting location:', error);
       showError('Lỗi', 'Không thể lấy vị trí hiện tại');

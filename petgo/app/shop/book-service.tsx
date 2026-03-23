@@ -13,11 +13,13 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import * as WebBrowser from 'expo-web-browser';
 import api from '@/utils/api';
 
 const TIME_SLOTS = ['08:00 - 09:00', '09:00 - 10:00', '10:00 - 11:00', '14:00 - 15:00', '15:00 - 16:00', '16:00 - 17:00'];
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Tiền mặt tại cửa hàng' },
+  { id: 'vnpay', label: 'Thanh toán VNPay (thẻ/QR)' },
 ];
 
 export default function BookServiceScreen() {
@@ -85,9 +87,21 @@ export default function BookServiceScreen() {
       });
 
       if (res.data.success) {
-        Alert.alert('Thành công', 'Đặt lịch thành công!', [
-          { text: 'OK', onPress: () => router.back() }
-        ]);
+        const bookingId = res.data.data._id;
+        
+        if (paymentMethod === 'vnpay') {
+          const payRes = await api.post('/v1/payments/create-payment-url', { bookingId });
+          if (payRes.data.success) {
+            await WebBrowser.openBrowserAsync(payRes.data.paymentUrl);
+            router.replace('/(tabs)/booking');
+          } else {
+             Alert.alert('Lỗi', 'Không thể tạo mã thanh toán VNPay');
+          }
+        } else {
+          Alert.alert('Thành công', 'Đặt lịch thành công!', [
+            { text: 'OK', onPress: () => router.back() }
+          ]);
+        }
       }
     } catch (error: any) {
       console.error('Lỗi đặt lịch:', error);
@@ -226,10 +240,26 @@ export default function BookServiceScreen() {
 
         <ThemedText style={styles.sectionTitle}>4. Phương thức thanh toán</ThemedText>
         <View style={styles.paymentContainer}>
-          <View style={[styles.paymentRow, styles.paymentRowActive]}>
-            <Ionicons name="cash-outline" size={24} color="#FF6F61" />
-            <ThemedText style={styles.paymentText}>Thanh toán tiền mặt tại cửa hàng</ThemedText>
-          </View>
+          {PAYMENT_METHODS.map((method) => (
+            <TouchableOpacity
+              key={method.id}
+              style={[
+                styles.paymentRow, 
+                paymentMethod === method.id && styles.paymentRowActive
+              ]}
+              onPress={() => setPaymentMethod(method.id)}
+            >
+              <Ionicons 
+                name={method.id === 'vnpay' ? 'card-outline' : 'cash-outline'} 
+                size={24} 
+                color={paymentMethod === method.id ? '#FF6F61' : '#666'} 
+              />
+              <ThemedText style={styles.paymentText}>{method.label}</ThemedText>
+              {paymentMethod === method.id && (
+                <Ionicons name="checkmark-circle" size={20} color="#FF6F61" style={{ marginLeft: 'auto' }} />
+              )}
+            </TouchableOpacity>
+          ))}
         </View>
 
 

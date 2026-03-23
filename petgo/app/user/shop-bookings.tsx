@@ -60,7 +60,28 @@ export default function ShopBookingsScreen() {
     }
   };
 
-  const filteredBookings = bookings.filter(b => activeTab === 'all' || b.status === activeTab);
+  const filteredBookings = bookings
+    .filter(b => activeTab === 'all' || b.status === activeTab)
+    .sort((a, b) => {
+      // Ở tab Đã duyệt, chỉ ưu tiên ngày làm dịch vụ sớm nhất
+      if (activeTab === 'confirmed') {
+        const dateA = new Date(a.bookingDate).getTime();
+        const dateB = new Date(b.bookingDate).getTime();
+        return dateA - dateB;
+      }
+
+      // Các tab khác: 1. Đã thanh toán lên đầu
+      const aPaid = a.paymentStatus === 'completed' ? 1 : 0;
+      const bPaid = b.paymentStatus === 'completed' ? 1 : 0;
+      if (aPaid !== bPaid) {
+        return bPaid - aPaid; // 1 lên trước 0
+      }
+      
+      // 2. Theo ngày thực hiện dịch vụ (bookingDate) tăng dần (sắp tới ưu tiên trước)
+      const dateA = new Date(a.bookingDate).getTime();
+      const dateB = new Date(b.bookingDate).getTime();
+      return dateA - dateB;
+    });
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -136,19 +157,40 @@ export default function ShopBookingsScreen() {
                   <View style={styles.divider} />
 
                   <View style={styles.customerInfo}>
-                    <ThemedText style={styles.customerDetail}>👤 {booking.user?.name || 'Khách hàng'}</ThemedText>
-                    <ThemedText style={styles.priceText}>{booking.price?.toLocaleString('vi-VN')} đ</ThemedText>
+                    <View>
+                      <ThemedText style={styles.customerDetail}>👤 {booking.user?.name || 'Khách hàng'}</ThemedText>
+                      <ThemedText style={styles.paymentMethod}>
+                        {booking.paymentMethod === 'vnpay' ? '💳 VNPay' : '💵 Tiền mặt'}
+                      </ThemedText>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <ThemedText style={styles.priceText}>{booking.price?.toLocaleString('vi-VN')} đ</ThemedText>
+                      {booking.paymentMethod === 'vnpay' && (
+                        <ThemedText style={[
+                          styles.paymentStatus, 
+                          { color: booking.paymentStatus === 'completed' ? '#10b981' : '#f59e0b' }
+                        ]}>
+                          {booking.paymentStatus === 'completed' ? 'Đã TT' : 'Chưa TT'}
+                        </ThemedText>
+                      )}
+                    </View>
                   </View>
 
                   {booking.status === 'pending' && (
-                    <View style={styles.actionsRow}>
-                      <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={() => handleUpdateStatus(booking._id, 'cancelled')}>
-                        <ThemedText style={styles.rejectText}>Từ chối</ThemedText>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleUpdateStatus(booking._id, 'confirmed')}>
-                        <ThemedText style={styles.approveText}>Duyệt đơn</ThemedText>
-                      </TouchableOpacity>
-                    </View>
+                    (booking.paymentMethod === 'vnpay' && booking.paymentStatus === 'pending') ? (
+                      <View style={styles.waitingPaymentContainer}>
+                        <ThemedText style={styles.waitingPaymentText}>⏳ Đang chờ khách thanh toán VNPay...</ThemedText>
+                      </View>
+                    ) : (
+                      <View style={styles.actionsRow}>
+                        <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={() => handleUpdateStatus(booking._id, 'cancelled')}>
+                          <ThemedText style={styles.rejectText}>Từ chối</ThemedText>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleUpdateStatus(booking._id, 'confirmed')}>
+                          <ThemedText style={styles.approveText}>Duyệt đơn</ThemedText>
+                        </TouchableOpacity>
+                      </View>
+                    )
                   )}
 
                   {booking.status === 'confirmed' && (
@@ -308,10 +350,20 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
+  paymentMethod: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+  },
   priceText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FF6F61',
+  },
+  paymentStatus: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginTop: 4,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -346,5 +398,21 @@ const styles = StyleSheet.create({
   completeText: {
     color: '#34C759',
     fontWeight: 'bold',
+  },
+  waitingPaymentContainer: {
+    marginTop: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFF9E6',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD60A',
+    borderStyle: 'dashed',
+  },
+  waitingPaymentText: {
+    color: '#D97706',
+    fontSize: 13,
+    fontWeight: '600',
   }
 });

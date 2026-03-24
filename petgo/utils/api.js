@@ -4,10 +4,10 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 // Tự động chọn URL: 127.0.0.1 cho Web, 10.0.2.2 cho Android Emulator
-export const BASE_URL = Platform.OS === 'web' 
-  ? 'http://127.0.0.1:9999' 
-  : 'http://10.0.2.2:9999';
-
+// export const BASE_URL = Platform.OS === 'web' 
+//   ? 'http://127.0.0.1:9999' 
+//   : 'http://10.0.2.2:9999';
+export const BASE_URL = 'https://petgo-mma301.onrender.com';
 const API_URL = `${BASE_URL}/api`;
 
 const api = axios.create({

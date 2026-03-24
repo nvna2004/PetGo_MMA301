@@ -56,7 +56,7 @@ export default function ForgotPasswordScreen() {
       <ThemedView style={styles.inner}>
         <View style={styles.header}>
           <Image
-            source={require('@/assets/images/icon.png')}
+            source={require('@/assets/images/logo-petgo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     marginBottom: 48,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 250,
+    height: 140,
     marginBottom: 16,
   },
   title: {

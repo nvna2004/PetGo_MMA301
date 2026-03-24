@@ -90,7 +90,7 @@ export default function ResetPasswordScreen() {
               keyboardType="number-pad"
               maxLength={6}
             />
-            
+
             <ThemedText style={styles.inputLabel}>Mật khẩu mới</ThemedText>
             <TextInput
               style={styles.input}

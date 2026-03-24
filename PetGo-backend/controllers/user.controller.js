@@ -57,7 +57,7 @@ const registerUser = async (req, res) => {
 
     const otp = generateOTP();
 
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); 
+    const otpExpires = new Date(Date.now() + 1 * 60 * 1000); 
 
 
     const user = await User.create({

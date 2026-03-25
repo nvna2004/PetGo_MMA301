@@ -1,33 +1,65 @@
 const { Resend } = require('resend');
+const nodemailer = require("nodemailer");
 
 // Khởi tạo Resend với API Key lấy từ .env
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (options) => {
+  // 1. DÙNG RESEND (Dành cho Production/Mặc định trên Render)
   try {
+    console.log("Đang thử gửi mail qua Resend...");
     const { data, error } = await resend.emails.send({
-      // Trong môi trường test của Resend, bạn BẮT BUỘC dùng email gửi từ 'onboarding@resend.dev'
       from: 'PetGo System <onboarding@resend.dev>',
-      
-      // LƯU Ý QUAN TRỌNG: Ở gói Free của Resend (khi chưa add domain thật của bạn),
-      // bạn CHỈ CÓ THỂ gửi email TỚI địa chỉ email mà bạn đã dùng để đăng ký tài khoản Resend.
-      to: [options.email], 
-      
+      to: [options.email],
       subject: options.subject,
       text: options.message,
-      html: options.html, 
+      html: options.html,
     });
 
     if (error) {
-      console.error("Resend API chặn gửi hoặc báo lỗi:", error);
-      throw error;
+       // Nếu lỗi là do email chưa verify ở Resend, ta ném lỗi để nhảy xuống Nodemailer
+       console.warn("Resend báo lỗi (có thể do email chưa được xác minh hoặc sai key):", error.message);
+       throw new Error(error.message);
     }
 
-    console.log("Gửi email thành công qua Resend:", data);
+    console.log("Gửi qua Resend THÀNH CÔNG 🎉:", data);
     return data;
-  } catch (error) {
-    console.error("Lỗi khi gửi email:", error);
-    throw error;
+
+  } catch (resendError) {
+    // 2. CÁCH CŨ (Nodemailer fallback)
+    console.log("!!! Chuyển sang dùng Gmail Nodemailer (Cách cũ) ...");
+    
+    // Lưu ý: Gmail Nodemailer sẽ bị LỖI TREO trên Render nhưng sẽ CHẠY ĐƯỢC ở máy tính (Local)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, 
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const mailOptions = {
+      from: `"${process.env.FROM_NAME}" <${process.env.EMAIL_USER}>`,
+      to: options.email,
+      subject: options.subject,
+      text: options.message,
+      html: options.html, 
+    };
+
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Gửi qua Gmail Nodemailer THÀNH CÔNG 🎉:", info.messageId);
+      return info;
+    } catch (nodemailerError) {
+      console.error("Cả 2 cách đều thất bại!");
+      console.error("Lỗi Nodemailer:", nodemailerError.message);
+      throw nodemailerError;
+    }
   }
 };
 

@@ -1,33 +1,34 @@
-const nodemailer = require("nodemailer");
-const dns = require("dns");
+const { Resend } = require('resend');
 
-// Ép sử dụng IPv4 để tránh lỗi ENETUNREACH trên Render
-dns.setDefaultResultOrder("ipv4first");
+// Khởi tạo Resend với API Key lấy từ .env
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, 
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // Mã 16 ký tự bạn vừa có
-    },
-    tls: {
-      rejectUnauthorized: false
+  try {
+    const { data, error } = await resend.emails.send({
+      // Trong môi trường test của Resend, bạn BẮT BUỘC dùng email gửi từ 'onboarding@resend.dev'
+      from: 'PetGo System <onboarding@resend.dev>',
+      
+      // LƯU Ý QUAN TRỌNG: Ở gói Free của Resend (khi chưa add domain thật của bạn),
+      // bạn CHỈ CÓ THỂ gửi email TỚI địa chỉ email mà bạn đã dùng để đăng ký tài khoản Resend.
+      to: [options.email], 
+      
+      subject: options.subject,
+      text: options.message,
+      html: options.html, 
+    });
+
+    if (error) {
+      console.error("Resend API chặn gửi hoặc báo lỗi:", error);
+      throw error;
     }
-  });
 
-  const mailOptions = {
-    // SỬA Ở ĐÂY: Dùng EMAIL_USER để tránh bị Gmail coi là mạo danh
-    from: `"${process.env.FROM_NAME}" <${process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-    html: options.html, 
-  };
-
-  return transporter.sendMail(mailOptions);
+    console.log("Gửi email thành công qua Resend:", data);
+    return data;
+  } catch (error) {
+    console.error("Lỗi khi gửi email:", error);
+    throw error;
+  }
 };
 
 module.exports = sendEmail;
